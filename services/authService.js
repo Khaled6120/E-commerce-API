@@ -55,9 +55,30 @@ exports.protect = asynHandler(async (req, res, next) => {
         return next(new ApiError("You are not login, please login to get access this route"), 401)
     }
 
-    // 2) verify token (no change happens, expired token)
+    // 2) verify token (no change happens, or the token has been expired)
+    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY)
+    // decode : {
+    // userId : 334345435342324,
+    // iat : 154354354
+    // exp : 154359643
+    // }
 
     // 3) ckdck if user exists
+    const currentUser = await User.findById(decoded.userId)
+    if (!currentUser) {
+        return next(new ApiError("the user that belong to this token no longer exist", 401))
+    }
 
     // 4) check if user change his password after token created
+    if (currentUser.passwordChangedAt) {
+        const passChangedTimestamp = parseInt(
+            currentUser.passwordChangedAt.getTime() / 1000, 10
+        )
+        // password changed after token created (error)
+        if (passChangedTimestamp < decoded.iat) {
+            return next(new ApiError("user recently changed his password, please login again..", 401))
+        }
+    }
+    req.user = currentUser
+    next()
 })
