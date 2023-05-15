@@ -16,12 +16,12 @@ router.use('/:categoryId/subcategories', subcategoriesRoute)
 router
     .route('/')
     .get(getCategories)
-    .post(AuthService.protect, uploadCategoryImage, resizeImage, createCategoryValidator, createCategory);
+    .post(AuthService.protect, AuthService.allowedTo("admin", "manager"), uploadCategoryImage, resizeImage, createCategoryValidator, createCategory);
 
 router
     .route("/:id")
     .get(getCategoryValidator, getCategory)
-    .put(updateCategoryValidator, updateCategory)
-    .delete(deleteCategoryValidator, deleteCategory)
+    .put(AuthService.protect, AuthService.allowedTo("admin", "manager"), updateCategoryValidator, updateCategory)
+    .delete(AuthService.protect, AuthService.allowedTo("admin"), deleteCategoryValidator, deleteCategory)
 
 module.exports = router

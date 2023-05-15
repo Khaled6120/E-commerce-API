@@ -21,7 +21,7 @@ exports.signup = asynHandler(async (req, res, next) => {
     const user = await User.create({
         name: req.body.name,
         email: req.body.email,
-        password: req.body.password
+        password: req.body.password,
     })
 
     // 2) generate token
@@ -81,4 +81,17 @@ exports.protect = asynHandler(async (req, res, next) => {
     }
     req.user = currentUser
     next()
+})
+
+// only for ["admin", 'manger']
+exports.allowedTo = (...roles) => asynHandler(async (req, res, next) => {
+    // 1) access roles
+    // 2) access registered user (req.user.role)
+    if (!roles.includes(req.user.role)) {
+        return next(new ApiError("You are not allowed to acces this route", 403))
+    }
+
+    next()
+
+
 })
