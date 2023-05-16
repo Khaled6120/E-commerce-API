@@ -1,9 +1,12 @@
+const crypto = require("crypto")
+
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
 
-const asynHandler = require('express-async-handler')
+const asyncHandler = require('express-async-handler')
 const ApiError = require('../utils/apiError')
 const User = require('../models/UserModel')
+const sendEmail = require("../utils/sendEmail")
 
 
 const createToken = (payload) =>
@@ -16,7 +19,7 @@ const createToken = (payload) =>
 // @desc       Signup
 // @route      PUT   /api/v1/auth/signup
 // @access     public
-exports.signup = asynHandler(async (req, res, next) => {
+exports.signup = asyncHandler(async (req, res, next) => {
     // 1) create user
     const user = await User.create({
         name: req.body.name,
@@ -30,7 +33,7 @@ exports.signup = asynHandler(async (req, res, next) => {
     res.status(201).json({ data: user, token })
 })
 
-exports.login = asynHandler(async (req, res, next) => {
+exports.login = asyncHandler(async (req, res, next) => {
     // 1) check if password and email in the body
     const user = await User.findOne({ email: req.body.email })
 
@@ -44,7 +47,7 @@ exports.login = asynHandler(async (req, res, next) => {
     res.status(200).json({ data: user, token })
 })
 
-exports.protect = asynHandler(async (req, res, next) => {
+exports.protect = asyncHandler(async (req, res, next) => {
     // 1) check if token exist, if so get it
     let token
 
@@ -83,8 +86,10 @@ exports.protect = asynHandler(async (req, res, next) => {
     next()
 })
 
+// @desc       Authorization (user permession)
 // only for ["admin", 'manger']
-exports.allowedTo = (...roles) => asynHandler(async (req, res, next) => {
+
+exports.allowedTo = (...roles) => asyncHandler(async (req, res, next) => {
     // 1) access roles
     // 2) access registered user (req.user.role)
     if (!roles.includes(req.user.role)) {
@@ -93,5 +98,79 @@ exports.allowedTo = (...roles) => asynHandler(async (req, res, next) => {
 
     next()
 
+})
 
+
+// @desc       Forget Password
+// @route      Post   /api/v1/auth/forgotPassword
+// @access     public
+exports.forgotPassword = asyncHandler(async (req, res, next) => {
+    // 1) Get user by email
+    const user = await User.findOne({ email: req.body.email });
+    if (!user) {
+        return next(
+            new ApiError(`There is no user with that email ${req.body.email}`, 404)
+        );
+    }
+    // 2) If user exist, Generate hash reset random 6 digits and save it in db
+    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const hashedResetCode = crypto
+        .createHash('sha256')
+        .update(resetCode)
+        .digest('hex');
+
+    // Save hashed password reset code into db
+    user.passwordResetCode = hashedResetCode;
+    // Add expiration time for password reset code (10 min)
+    user.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+    user.passwordResetVerified = false;
+
+    await user.save();
+
+    // 3) Send the reset code via email
+    const message = `Hi ${user.name},\n We received a request to reset the password on your E-shop Account. \n ${resetCode} \n Enter this code to complete the reset. \n Thanks for helping us keep your account secure.\n The E-shop Team`;
+    try {
+        await sendEmail({
+            email: user.email,
+            subject: 'Your password reset code (valid for 10 min)',
+            message,
+        });
+    } catch (err) {
+        user.passwordResetCode = undefined;
+        user.passwordResetExpires = undefined;
+        user.passwordResetVerified = undefined;
+
+        await user.save();
+        return next(new ApiError('There is an error in sending email', 500));
+    }
+
+    res
+        .status(200)
+        .json({ status: 'Success', message: 'Reset code sent to email' });
+});
+
+
+// @desc       Verify Reset Code Password
+// @route      Post   /api/v1/auth/verifyResetCode
+// @access     public
+exports.passwordResetVerified = asyncHandler(async (req, res, next) => {
+    // 1) get the user based on reset code 
+    const hashedResetCode = crypto
+        .createHash('sha256')
+        .update(req.body.resetCode)
+        .digest('hex');
+
+    const user = await User.findOne({
+        passwordResetCode: hashedResetCode,
+        passwordResetExpires: { $gt: Date.now() },
+    })
+    if (!user) return next(new ApiError('Reset code invalid or expired'))
+
+    // 2) Reset code valid
+    user.passwordResetVerified = true
+    await user.save()
+
+    res.status(200).json({
+        status: 'Success'
+    })
 })

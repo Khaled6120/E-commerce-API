@@ -1,6 +1,6 @@
 const express = require("express")
 
-const { signup, login } = require("../services/authService")
+const { signup, login, forgotPassword, passwordResetVerified } = require("../services/authService")
 
 const { signupValidator, loginValidator } = require('../utils/validators/authValidator')
 const router = express.Router()
@@ -17,6 +17,13 @@ router
 router
     .route("/login")
     .post(loginValidator, login)
+router
+    .route("/forgotPassword")
+    .post(forgotPassword)
+router
+    .route("/verifyResetCode")
+    .post(passwordResetVerified)
+passwordResetVerified
 /*router
     .route("/:id")
     .get(getUserValidator, getUser)
