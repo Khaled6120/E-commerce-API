@@ -1,6 +1,6 @@
 const express = require("express")
 
-const { getUsers, getUser, createUser, updateUser, deleteUser, uploadUserImage, resizeImage, changeUserPassword } = require("../services/userService")
+const { getUsers, getUser, createUser, updateUser, deleteUser, uploadUserImage, resizeImage, changeUserPassword, getLoggedUserData } = require("../services/userService")
 
 const { createUserValidator, getUserValidator, deleteUserValidator, updateUserValidator, changeUserPasswordValidator } = require('../utils/validators/userValidator')
 const AuthService = require('../services/authService')
@@ -12,6 +12,9 @@ const router = express.Router()
 // router.get("/", getCategories)
 // router.post("/", createCategory)
 // Same as below
+
+router.get('/getMe', AuthService.protect, getLoggedUserData, getUser)
+
 router
     .route("/")
     .get(AuthService.protect, AuthService.allowedTo("admin", 'manager'), getUsers)
