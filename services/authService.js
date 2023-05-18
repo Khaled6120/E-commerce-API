@@ -7,12 +7,9 @@ const asyncHandler = require('express-async-handler')
 const ApiError = require('../utils/apiError')
 const User = require('../models/UserModel')
 const sendEmail = require("../utils/sendEmail")
+const createToken = require('../utils/createToken')
 
 
-const createToken = (payload) =>
-    jwt.sign({ userId: payload }, process.env.JWT_SECRET_KEY, {
-        expiresIn: process.env.JWT_EXPIRE_TIME,
-    })
 
 
 
@@ -48,43 +45,57 @@ exports.login = asyncHandler(async (req, res, next) => {
 })
 
 exports.protect = asyncHandler(async (req, res, next) => {
-    // 1) check if token exist, if so get it
-    let token
-
-    if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
-        token = req.headers.authorization.split(" ")[1]
+    // 1) Check if token exist, if exist get
+    let token;
+    if (
+        req.headers.authorization &&
+        req.headers.authorization.startsWith('Bearer')
+    ) {
+        token = req.headers.authorization.split(' ')[1];
     }
     if (!token) {
-        return next(new ApiError("You are not login, please login to get access this route"), 401)
+        return next(
+            new ApiError(
+                'You are not login, Please login to get access this route',
+                401
+            )
+        );
     }
 
-    // 2) verify token (no change happens, or the token has been expired)
-    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY)
-    // decode : {
-    // userId : 334345435342324,
-    // iat : 154354354
-    // exp : 154359643
-    // }
+    // 2) Verify token (no change happens, expired token)
+    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
 
-    // 3) ckdck if user exists
-    const currentUser = await User.findById(decoded.userId)
+    // 3) Check if user exists
+    const currentUser = await User.findById(decoded.userId);
     if (!currentUser) {
-        return next(new ApiError("the user that belong to this token no longer exist", 401))
+        return next(
+            new ApiError(
+                'The user that belong to this token does no longer exist',
+                401
+            )
+        );
     }
 
-    // 4) check if user change his password after token created
+    // 4) Check if user change his password after token created
     if (currentUser.passwordChangedAt) {
         const passChangedTimestamp = parseInt(
-            currentUser.passwordChangedAt.getTime() / 1000, 10
-        )
-        // password changed after token created (error)
-        if (passChangedTimestamp < decoded.iat) {
-            return next(new ApiError("user recently changed his password, please login again..", 401))
+            currentUser.passwordChangedAt.getTime() / 1000,
+            10
+        );
+        // Password changed after token created (Error)
+        if (passChangedTimestamp > decoded.iat) {
+            return next(
+                new ApiError(
+                    'User recently changed his password. please login again..',
+                    401
+                )
+            );
         }
     }
-    req.user = currentUser
-    next()
-})
+
+    req.user = currentUser;
+    next();
+});
 
 // @desc       Authorization (user permession)
 // only for ["admin", 'manger']
