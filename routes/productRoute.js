@@ -3,10 +3,12 @@ const express = require("express")
 const { getProducts, createProduct, getProduct, updateProduct, deleteProduct, uploadProductImages, resizeProductImages } = require("../services/productService")
 const { createProductValidator, updateProductValidator, deleteProductValidator, getProductValidator } = require("../utils/validators/productValidator")
 const AuthService = require('../services/authService')
-
+const reviewsRoute = require("./reviewRoute")
 const router = express.Router()
 
 
+
+router.use("/:productId/reviews", reviewsRoute)
 
 // router.get("/", getCategories)
 // router.post("/", createCategory)
