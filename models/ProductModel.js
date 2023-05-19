@@ -65,7 +65,21 @@ const productSchema = new mongoose.Schema({
         type: Number,
         default: 0,
     },
-}, { timestamps: true })
+},
+    {
+        timestamps: true,
+        // to enable virtual populate
+        toJSON: { virtuals: true },
+        toObject: { virtuals: true }
+    })
+
+// create a field called reviews which will get all reviews of that product which its id is equal _id 
+productSchema.virtual("reviews", {
+    ref: "Review",
+    foreignField: "product",
+    localField: "_id",
+})
+
 
 //mongoose query middleware
 productSchema.pre(/^find/, function (next) {

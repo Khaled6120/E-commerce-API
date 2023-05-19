@@ -13,7 +13,7 @@ const router = express.Router()
 // Same as below
 router
     .route("/")
-    .get(getReviewValidator, getReviews)
+    .get(getReviews)
     .post(AuthService.protect, AuthService.allowedTo("user"), createReviewValidator, createReview)
 router
     .route("/:id")

@@ -33,9 +33,16 @@ exports.createOne = (Model) =>
 
     })
 
-exports.getOne = Model => asyncHandler(async (req, res, next) => {
+exports.getOne = (Model, populationOpt) => asyncHandler(async (req, res, next) => {
     const { id } = req.params
-    const document = await Model.findById(id)
+    // 1) build query
+    const query = Model.findById(id)
+    if (populationOpt) {
+        query.populate(populationOpt)
+    }
+
+    // 2) Execute query
+    const document = await query
     if (!document) {
         return next(new ApiError(`No brand for this id ${id}`, 404))
     }

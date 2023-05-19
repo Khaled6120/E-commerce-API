@@ -32,36 +32,45 @@ exports.getReviewValidator = [
 exports.updateReviewValidator = [
     check('id')
         .isMongoId()
-        .withMessage("Invalid Review id format").custom((val, { req }) => {
-            // check reviw ownership before update
+        .withMessage('Invalid Review id format')
+        .custom((val, { req }) =>
+            // Check review ownership before update
             Review.findById(val).then((review) => {
                 if (!review) {
-                    return Promise.reject(new Error(`There is no review with id ${val}`))
+                    return Promise.reject(new Error(`There is no review with id ${val}`));
                 }
-                if (review.user.toString() !== req.user._id.toString()) {
-                    return Error("You are not allwoed to perform this action")
+
+                if (review.user._id.toString() !== req.user._id.toString()) {
+                    return Promise.reject(
+                        new Error(`Your are not allowed to perform this action`)
+                    );
                 }
             })
-        }),
-
+        ),
     validatorMiddleware,
-
 ]
 
 exports.deleteReviewValidator = [
-    check('id').isMongoId().withMessage("Invalid Review id format")
+    check('id')
+        .isMongoId()
+        .withMessage('Invalid Review id format')
         .custom((val, { req }) => {
+            // Check review ownership before update
             if (req.user.role === 'user') {
                 return Review.findById(val).then((review) => {
                     if (!review) {
-                        return Promise.reject(new Error(`There is no review with id ${val}`))
+                        return Promise.reject(
+                            new Error(`There is no review with id ${val}`)
+                        );
                     }
-                    if (review.user.toString() !== req.user._id.toString()) {
-                        return Promise.reject(new Error("You are not allwoed to perform this action"))
+                    if (review.user._id.toString() !== req.user._id.toString()) {
+                        return Promise.reject(
+                            new Error(`Your are not allowed to perform this action`)
+                        );
                     }
-                })
+                });
             }
-            return true
+            return true;
         }),
     validatorMiddleware,
 ]
