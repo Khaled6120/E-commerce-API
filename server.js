@@ -20,6 +20,7 @@ const productRoute = require("./routes/productRoute")
 const userRoute = require("./routes/userRoute")
 const authRoute = require('./routes/authRoute')
 const reviewRoute = require("./routes/reviewRoute")
+const wishlistRoute = require("./routes/wishlistRoute")
 
 dbConnection()
 //express app
@@ -32,7 +33,7 @@ app.use(express.json())
 
 if (process.env.NODE_ENV === 'development') {
     app.use(morgan('dev'))
-    console.log(`mode: ${process.env.NODE_ENV}`)
+    console.log(`⚠️ ⚠️  Mode: ${process.env.NODE_ENV} `)
 
 }
 
@@ -44,6 +45,8 @@ app.use("/api/v1/products", productRoute)
 app.use("/api/v1/users", userRoute)
 app.use("/api/v1/auth", authRoute)
 app.use("/api/v1/reviews", reviewRoute)
+app.use("/api/v1/wishlist", wishlistRoute)
+
 
 app.all('*', (req, res, next) => {
     //create error and send it to error handling middleware
@@ -63,7 +66,7 @@ app.use(globalError)
 
 const PORT = process.env.PORT || 3000
 const server = app.listen(PORT, () => {
-    console.log(`App runining on port ${PORT}`)
+    console.log(`⚡  App runining on port ${PORT} `)
 })
 
 

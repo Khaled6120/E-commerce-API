@@ -37,7 +37,14 @@ const userSchema = new mongoose.Schema({
     active: {
         type: Boolean,
         default: true
-    }
+    },
+    // child reference (one to many)
+    wishlist: [
+        {
+            type: mongoose.Schema.ObjectId,
+            ref: 'Product'
+        }
+    ]
 
 
 }, { timestamps: true })
