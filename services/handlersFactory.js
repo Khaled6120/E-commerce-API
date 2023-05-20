@@ -10,6 +10,10 @@ exports.deleteOne = (Model) =>
         if (!document) {
             return next(new ApiError(`No document for this id ${id}`, 404));
         }
+
+        // Trigger "remove" even when update document
+        document.save()
+
         res.status(204).send();
     });
 
@@ -22,6 +26,9 @@ exports.updateOne = Model =>
         if (!document) {
             return next(new ApiError(`No brand for this id ${req.params.id}`, 404))
         }
+        // Trigger "save" even when update document
+        document.save()
+
         res.status(200).json({ data: document })
     })
 
