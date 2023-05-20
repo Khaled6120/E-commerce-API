@@ -1,6 +1,6 @@
 const express = require("express")
 
-const { addProductToWishlist } = require("../services/whishlistService")
+const { addProductToWishlist, removeProductFromWishlist } = require("../services/whishlistService")
 const AuthService = require('../services/authService')
 
 const router = express.Router()
@@ -13,6 +13,11 @@ const router = express.Router()
 router
     .route("/")
     .post(AuthService.protect, AuthService.allowedTo("user"), addProductToWishlist)
+
+router.delete("/:productId",
+    AuthService.protect,
+    AuthService.allowedTo("user"),
+    removeProductFromWishlist)
 
 
 module.exports = router
