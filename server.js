@@ -23,6 +23,7 @@ const reviewRoute = require("./routes/reviewRoute")
 const wishlistRoute = require("./routes/wishlistRoute")
 const addressRoute = require("./routes/addressRoute")
 const couponRoute = require("./routes/couponRoute")
+const cartRoute = require("./routes/cartRoute")
 
 dbConnection()
 //express app
@@ -50,6 +51,7 @@ app.use("/api/v1/reviews", reviewRoute)
 app.use("/api/v1/wishlist", wishlistRoute)
 app.use("/api/v1/addresses", addressRoute)
 app.use("/api/v1/coupons", couponRoute)
+app.use("/api/v1/cart", cartRoute)
 
 
 app.all('*', (req, res, next) => {
