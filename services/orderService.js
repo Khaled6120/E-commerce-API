@@ -69,3 +69,51 @@ exports.findAllOrders = factory.getAll(Order)
 // @route      POST   /api/v1/orders
 // @access     protected/ User-Admin-Manager
 exports.findSpecificOrder = factory.getOne(Order)
+
+
+
+// @desc    Update order paid status to paid
+// @route   PUT /api/v1/orders/:id/pay
+// @access  Protected/Admin-Manager
+exports.updateOrderToPaid = asyncHandler(async (req, res, next) => {
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+        return next(
+            new ApiError(
+                `There is no such a order with this id:${req.params.id}`,
+                404
+            )
+        );
+    }
+
+    // update order to paid
+    order.isPaid = true;
+    order.paidAt = Date.now();
+
+    const updatedOrder = await order.save();
+
+    res.status(200).json({ status: 'success', data: updatedOrder });
+});
+
+// @desc    Update order delivered status
+// @route   PUT /api/v1/orders/:id/deliver
+// @access  Protected/Admin-Manager
+exports.updateOrderToDelivered = asyncHandler(async (req, res, next) => {
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+        return next(
+            new ApiError(
+                `There is no such a order with this id:${req.params.id}`,
+                404
+            )
+        );
+    }
+
+    // update order to paid
+    order.isDelivered = true;
+    order.deliveredAt = Date.now();
+
+    const updatedOrder = await order.save();
+
+    res.status(200).json({ status: 'success', data: updatedOrder });
+});
