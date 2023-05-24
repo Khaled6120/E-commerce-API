@@ -51,3 +51,21 @@ exports.createCashOrder = asyncHandler(async (req, res, next) => {
 })
 
 
+exports.filterOrderForLoggedUser = asyncHandler(
+    async (req, res, next) => {
+        if (req.user.role === "user") req.filterObj = { user: req.user._id }
+        next()
+    }
+)
+
+// @desc       GET ALL orders 
+// @route      POST   /api/v1/orders
+// @access     protected/ User-Admin-Manager
+exports.findAllOrders = factory.getAll(Order)
+
+
+
+// @desc       GET ALL orders 
+// @route      POST   /api/v1/orders
+// @access     protected/ User-Admin-Manager
+exports.findSpecificOrder = factory.getOne(Order)
