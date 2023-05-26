@@ -1,3 +1,4 @@
+const stripe = require("stripe")(process.env.STRIPE_SECRET)
 const asyncHandler = require('express-async-handler')
 const ApiError = require('../utils/apiError')
 
@@ -117,3 +118,56 @@ exports.updateOrderToDelivered = asyncHandler(async (req, res, next) => {
 
     res.status(200).json({ status: 'success', data: updatedOrder });
 });
+
+
+// @desc    GET Checkout Session from stripe and send it as a response
+// @route   GET /api/v1/orders/checkout-session/cartId
+// @access  Protected/user
+exports.checkoutSession = asyncHandler(async (req, res, next) => {
+    // app setting
+    const taxPrice = 0
+    const shippingPrice = 0
+    // 1) get cart depend on cartId
+    const cart = await Cart.findById(req.params.cartId)
+
+    if (!cart) return next(
+        new ApiError('There is no such cart with this id', 404)
+    )
+
+    // 2) get order price depend on cart price "check if coupon apply"
+    const cartPrice = cart.totalPriceAfterDiscount ? cart.totalPriceAfterDiscount : cart.totalCartPrice
+
+    const totalOrderPrice = cartPrice + taxPrice + shippingPrice
+
+
+    // 3) Generate stripe checkout session
+    const session = await stripe.checkout.sessions.create({
+        line_items: [
+            {
+
+
+
+                price_data: {
+                    currency: 'try',
+                    unit_amount: totalOrderPrice * 100,
+                    product_data: {
+                        name: req.user.name,
+                    },
+                },
+
+
+                // Provide the exact Price ID (for example, pr_1234) of the product you want to sell
+                quantity: 1,
+            },
+        ],
+        mode: 'payment',
+        success_url: `${req.protocol}://${req.get('host')}/orders`,
+        cancel_url: `${req.protocol}://${req.get('host')}/cart`,
+        customer_email: req.user.email,
+        client_reference_id: req.params.id,
+        metadata: req.body.shippingAddress,
+
+    });
+
+    res.status(200).json({ status: 'success', session })
+})

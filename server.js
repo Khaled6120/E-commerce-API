@@ -3,6 +3,8 @@ const path = require('path');
 const express = require('express')
 const dotenv = require('dotenv')
 const morgan = require("morgan")
+const cors = require('cors')
+const compression = require('compression')
 
 dotenv.config({ path: 'config.env' })
 const ApiError = require("./utils/apiError")
@@ -29,6 +31,13 @@ const orderRoute = require("./routes/orderRoute")
 dbConnection()
 //express app
 const app = express()
+
+// enable other domains to access ur api
+app.use(cors())
+app.options('*', cors())
+
+app.use(compression())
+
 app.use(express.static(path.join(__dirname, 'uploads')))
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));

@@ -1,6 +1,6 @@
 const express = require("express")
 
-const { createCashOrder, findAllOrders, findSpecificOrder, filterOrderForLoggedUser, updateOrderToPaid, updateOrderToDelivered } = require("../services/orderService")
+const { createCashOrder, findAllOrders, findSpecificOrder, filterOrderForLoggedUser, updateOrderToPaid, updateOrderToDelivered, checkoutSession } = require("../services/orderService")
 
 const AuthService = require('../services/authService')
 
@@ -8,10 +8,10 @@ const router = express.Router()
 
 
 
-// router.get("/", getCategories)
-// router.post("/", createCategory)
-// Same as below
+
 router.use(AuthService.protect)
+
+router.get("/checkout-session/:cartId", AuthService.allowedTo("user"), checkoutSession)
 
 router
     .route("/:cartId")
